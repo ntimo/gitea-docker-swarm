@@ -1,0 +1,46 @@
+version: '3'
+
+services:
+  traefik:
+    image: traefik:alpine
+    command: |-
+      --entryPoints="Name:http Address::80 Redirect.EntryPoint:https"
+      --entryPoints="Name:https Address::443 TLS"
+      --defaultentrypoints="http,https"
+      --accesslogsfile="/var/log/access.log"
+      --acme 
+      --acme.acmelogging="true"
+      --acme.email="your-email@domain.com"
+      --acme.entrypoint="https"
+      --acme.httpChallenge.entryPoint="http"
+      --acme.storage="/acme/acme.json"
+      --acme.onhostrule="true"
+      --docker
+      --docker.swarmmode
+      --docker.domain="domain.com"
+      --docker.watch
+      --web
+    ports:
+      - 80:80
+      - 443:443
+      - 8080:8080
+    networks:
+      - proxy
+    volumes:
+      - traefik:/acme/
+      - traefik:/var/log/access.log
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+volumes:
+  traefik:
+    driver: hetzner:latest
+    driver_opts:
+      size: '10'
+
+networks:
+  proxy:
+    external: true
