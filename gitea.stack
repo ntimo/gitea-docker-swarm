@@ -1,0 +1,36 @@
+version: "3"
+
+services:
+  server:
+    image: gitea/gitea:latest
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+    restart: always
+    volumes:
+      - gitea:/data
+    networks:
+      - proxy
+    ports:
+      - "222:22"
+    expose:
+      - 3000
+    deploy:
+      placement:
+        constraints:
+          - node.role == worker
+      labels:
+        traefik.enable: "true"
+        traefik.frontend.rule: 'Host: gitea.domain.com'
+        traefik.port: 3000
+        traefik.docker.network: 'proxy'
+
+networks:
+  proxy:
+    external: true
+
+volumes:
+  gitea:
+    driver: hetzner:latest
+    driver_opts:
+      size: '10'
